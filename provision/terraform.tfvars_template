@@ -1,0 +1,5 @@
+region                = "REGION"
+state_bucket_name     = "STATEBUCKETNAME"
+artifacts_bucket_name = "ARTIFACTBUCKETNAME"
+table_name            = "TABLENAME"
+environment           = "ENVIRONMENT"

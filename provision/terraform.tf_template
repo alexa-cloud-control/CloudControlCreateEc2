@@ -1,0 +1,9 @@
+terraform {
+  backend "s3" {
+    bucket         = "STATEBUCKETNAME"
+    encrypt        = true
+    key            = "terraformstates/CloudControlCreateEc2.tfstate"
+    dynamodb_table = "TABLENAME"
+    region         = "REGION"
+  }
+}
