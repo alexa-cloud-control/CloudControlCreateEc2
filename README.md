@@ -7,3 +7,4 @@
 [![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=alexa-cloud-control_CloudControlCreateEc2&metric=sqale_rating)](https://sonarcloud.io/dashboard?id=alexa-cloud-control_CloudControlCreateEc2)
 [![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=alexa-cloud-control_CloudControlCreateEc2&metric=security_rating)](https://sonarcloud.io/dashboard?id=alexa-cloud-control_CloudControlCreateEc2)
 [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=alexa-cloud-control_CloudControlCreateEc2&metric=coverage)](https://sonarcloud.io/dashboard?id=alexa-cloud-control_CloudControlCreateEc2)
+[![Technical Debt](https://sonarcloud.io/api/project_badges/measure?project=alexa-cloud-control_CloudControlCreateEc2&metric=sqale_index)](https://sonarcloud.io/dashboard?id=alexa-cloud-control_CloudControlCreateEc2)
