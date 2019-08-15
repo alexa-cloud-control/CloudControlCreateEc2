@@ -90,5 +90,5 @@ jobs:
           memory_size: 128
           timeout: 5
           zip: py/cloud_control_create_ec2.py
-          environment_variables: [table=${dynamodb_context}]
+          environment_variables: table=${dynamodb_context}
 
