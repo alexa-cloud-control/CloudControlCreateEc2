@@ -18,6 +18,11 @@ variable "table_name" {
   description = "Name of the DynamoDB table, where locks will be written"
 }
 
+variable "context_table_name" {
+  type        = "string"
+  description = "Name of the DynamoDB table, where context will be written"
+}
+
 variable "environment" {
   type        = "string"
   description = "Working environment"

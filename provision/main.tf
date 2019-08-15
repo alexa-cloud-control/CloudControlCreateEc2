@@ -48,6 +48,15 @@ resource "aws_iam_policy" "LambdaAlexaCloudControlCreateEc2IamPolicy" {
         },
         {
             "Effect": "Allow",
+            "Action": [
+                "dynamodb:GetItem",
+                "dynamodb:PutItem",
+                "dynamodb:DeleteItem"
+            ],
+            "Resource": ["arn:aws:dynamodb:*:*:table/${var.context_table_name}"]
+        },
+        {
+            "Effect": "Allow",
             "Action": "logs:CreateLogGroup",
             "Resource": "arn:aws:logs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:*"
         },
