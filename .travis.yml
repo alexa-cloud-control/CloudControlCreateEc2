@@ -91,5 +91,5 @@ jobs:
           timeout: 5
           zip: py/cloud_control_create_ec2.py
           environment_variables: table=${dynamodb_context}
-          function_tags: {"Name"="cloud_control_create_ec2","Project"="Alexa Cloud Control"}
+          function_tags: ["Name"="cloud_control_create_ec2","Project"="Alexa Cloud Control"]
 
