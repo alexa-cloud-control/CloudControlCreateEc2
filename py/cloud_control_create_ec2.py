@@ -1,6 +1,8 @@
 """ Lambda function - create ec2 """
 import boto3
 
+# def write_to_dynamo ():
+
 def ec2_find_subnet(ec_data, msg):
     """ Check if Subnet exists """
     ec2 = boto3.client('ec2')
@@ -98,7 +100,7 @@ def cloud_control_create_ec2(event, context):
     # This should be improved.
     # It looks bad, but I do not have idea now, how to write it better.
     if not key_name == "none":
-        response = ec2.run_instances(
+        response = ec2_client.run_instances(
             BlockDeviceMappings=[
                 {
                     'DeviceName': '/dev/xvda',
@@ -135,7 +137,7 @@ def cloud_control_create_ec2(event, context):
             ]
         )
     else:
-        response = ec2.run_instances(
+        response = ec2_client.run_instances(
             BlockDeviceMappings=[
                 {
                     'DeviceName': '/dev/xvda',
