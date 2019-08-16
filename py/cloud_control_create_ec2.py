@@ -1,8 +1,6 @@
 """ Lambda function - create ec2 """
 import boto3
 
-# def write_to_dynamo ():
-
 def ec2_find_subnet(ec_data, msg):
     """ Check if Subnet exists """
     ec2 = boto3.client('ec2')
@@ -60,8 +58,8 @@ def ec2_find_key(ec_data, msg):
 def cloud_control_create_ec2(event, context):
     """ Lambda function - create ec2 """
 
+    msg = ""
     # validate instance name
-    ec2 = boto3.resource('ec2')
     ec2_client = boto3.client('ec2')
     response = ec2_client.describe_instances(
         Filters=[
@@ -82,7 +80,7 @@ def cloud_control_create_ec2(event, context):
 
 # to refactor
 
-    msg = ""
+    msg = "Instance {} is created ".format(event["body"]["InstanceName"])
     subnet_name = event["body"]["SubnetName"].lower()
     success_code, msg, subnet_id = ec2_find_subnet(subnet_name, msg)
     if not success_code == 0:
