@@ -65,7 +65,7 @@ jobs:
         - sed -i -e "s/STATEBUCKETNAME/${terraform_bucket}/g" terraform.tfvars_template
         - sed -i -e "s/ARTIFACTBUCKETNAME/${artifact_bucket}/g" terraform.tfvars_template
         - sed -i -e "s/ENVIRONMENT/${terraform_environment}/g" terraform.tfvars_template
-        - sed -i -e "s/CONTEXTTABLENAME/${dynamodb_context}/g" terraform.tfvars_template
+        - sed -i -e "s/CONTEXTTABLE/${dynamodb_context}/g" terraform.tfvars_template
         - mv terraform.tfvars_template terraform.tfvars
         - terraform init
         - terraform validate
