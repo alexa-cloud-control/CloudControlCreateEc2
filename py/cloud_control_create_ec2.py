@@ -1,6 +1,26 @@
 """ Lambda function - create ec2 """
 import boto3
 
+def write_to_dynamo(context):
+    """ Write data to DynamoDB table """
+    dynamodb_resource = boto3.resource('dynamodb')
+    dynamodb_client = boto3.client('dynamodb')
+    context_table = dynamodb_resource.Table('alexa-cloud-control-context')
+    #funkcja z listą i iteracja po liście. To będzie najbardziej usable.
+    for context_key, context_value in context.items():
+        try:
+            context_table.put_item(
+                Item={
+                    'ContextElement': context_key,
+                    'ElementValue': context_value
+                }
+            )
+        except dynamodb_client.exceptions.ClientError as error:
+            msg = "Something wrong with my table!"
+            print(error)
+            return {"msg": msg}
+    return 0
+
 def ec2_find_subnet(ec_data, msg):
     """ Check if Subnet exists """
     ec2 = boto3.client('ec2')
@@ -170,4 +190,12 @@ def cloud_control_create_ec2(event, context):
                 },
             ]
         )
+    table_payload = {
+        "LastInstanceName": event["body"]["InstanceName"],
+        "LastSubnetName": event["body"]["SubnetName"],
+        "LastKeyPairName": event["body"]["KeyName"],
+        "LacSecGroupName": event["body"]["SecGroupName"],
+        "LastInstanceType": event["body"]["InstanceType"]
+    }
+    write_to_dynamo(table_payload)
     return {"msg": msg}
