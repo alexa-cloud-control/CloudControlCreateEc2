@@ -78,7 +78,7 @@ Resources:
       Environment:
         Variables:
           table: CONTEXTTABLE
-      Role: !GetAtt AlexaCloudControlCreateEc2FunctionRole.Arn
+      Role: !GetAtt AlexaCloudControlCreateEc2Role.Arn
       Tags:
         - 
           Key: Name
