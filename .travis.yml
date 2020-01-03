@@ -15,11 +15,7 @@ install:
   - sudo apt-add-repository "deb http://archive.ubuntu.com/ubuntu trusty-backports main restricted universe multiverse"
   - sudo apt-get -qq update
   - sudo apt-get -t trusty-backports install shellcheck
-  - sudo pip install awscli  
-  - curl -sLo /tmp/terraform.zip https://releases.hashicorp.com/terraform/0.12.5/terraform_0.12.5_linux_amd64.zip
-  - unzip /tmp/terraform.zip -d /tmp
-  - mv /tmp/terraform ~/bin
-  - export PATH="~/bin:$PATH"
+  - sudo pip install awscli
 
 jobs:
   include:
@@ -32,7 +28,7 @@ jobs:
         - docker run --rm -v $(pwd):/pylint -v $(pwd)/test:/tmp/config-custom almerhor/pylint:default py/cloud_control_create_ec2.py requirements-custom.txt
     
     - stage: Perform tests
-      dist: trusty
+      os: linux
       language: java
       sudo: required
       addons:
@@ -41,13 +37,58 @@ jobs:
           token: 
             secure: "Rs0YO1hVG4wMmspKFiWiFdJJeYSGAJG+cA9heb/kwbVJQleVZxb0jF0i5JOQ09MvgYcDExGROSiXj+69XVvfDZTDfmSYxEpmtgQzL0i8wo462dmD5KY+XRcU+nZqjuOFc1Xkjk2q+foo6Wb8tUBcNjh9gwAStWFv5qlicZn76iP54SeahoqHf6jnVi9lZntCpFbxfnjXNnLyY2WoNka/O4COmUU9TPmIL6APCouFCiSimD9QNrkoUh43fGvc69spnfFL373BlOma11AWlkNe35J9I9CZO92Ocx8VH4nAvSFX4aJ+5LCYLREvmf+pUpaHRm0xPI6XV/ee6hbOdC0D2BmrL30DKWx0Z697tmBMoQdz4f/ZIRyd/r2JljVL4FqbTPMaFvrYMwwFBYBgQ9Qota9NnzjNdbScjzjGxQ3B1Q5Y/MJ75VpYjMMJPEmvhTdnaBdJzoQTq5zbWLXHmdnY7ZwU9DtlYIqUlaOdMRel0PkFiKxqHAlWNUAR3WRDBfgDJdwbY5ItCRP9aQu6Dg2eppL6i1eP17uIu00hFrhz45/6RqoiiAVZglJ2xzG0Ju8slbu1tX8UlNYj7kig/RVNOO73eCvxwfUBg08g54pANs1efoRQ4XAWavl5QcjNyay8n3M24pkO/XoC59BgATsGoFziDovmSRPxJgbo3czLSJU="
       
-      jdk:
-        - oraclejdk8
-
       script:
-        - sudo chmod +x $(which sonar-scanner)
-        - export PATH=$(dirname $(which sonar-scanner)):$PATH
         - sonar-scanner
+
+    - stage: Perform tests
+      script:
+        - sed -i -e "s/ACCOUNTNUMBER/${account_number}/g" Alexa-CC-CreateEc2.yml
+        - sed -i -e "s/CONTEXTTABLE/${dynamodb_context}/g" Alexa-CC-CreateEc2.yml
+        - aws cloudformation validate-template --region ${terraform_region} --template-body file://Alexa-CC-CreateEc2.yml
+
+    - stage: Perform tests
+      script:
+        - echo "Check for commit ${TRAVIS_COMMIT} and tag ${TRAVIS_TAG} from branch ${TRAVIS_BRANCH}."
+        - echo "This is build number ${TRAVIS_BUILD_NUMBER}, for ${TRAVIS_REPO_SLUG}."
+        - sed -i -e "s/ACCOUNTNUMBER/${account_number}/g" Alexa-CC-CreateEc2.yml
+        - sed -i -e "s/CONTEXTTABLE/${dynamodb_context}/g" Alexa-CC-CreateEc2.yml
+        - docker pull almerhor/cfnlint:latest
+        - docker run --rm -v $(pwd)/:/lintfiles almerhor/cfnlint -t Alexa-CC-CreateEc2.yml
+
+    - stage: Prepare artifact
+      os: linux
+      language: python
+      python:
+        - "3.6"
+      script:
+        - echo "Building package"
+        - cd artifacts/scripts
+        - chmod +x *.sh
+        - ./env_prep.sh
+        - cd ../..
+        - echo "Send artifact to S3"
+      deploy:
+        - provider: s3
+          bucket: "${artifact_bucket}"
+          local_dir: artifacts/package
+          skip_cleanup: true
+
+    - stage: Deploy
+      script:
+        - sed -i -e "s/ACCOUNTNUMBER/${account_number}/g" Alexa-CC-CreateEc2.yml
+        - sed -i -e "s/CONTEXTTABLE/${dynamodb_context}/g" Alexa-CC-CreateEc2.yml
+      deploy:
+        provider: cloudformation
+        edge: true # use DPLv2
+        access_key_id: ${AWS_ACCESS_KEY_ID}
+        secret_access_key: ${AWS_SECRET_ACCESS_KEY}
+        capabilities: CAPABILITY_NAMED_IAM
+        template: Alexa-CC-CreateEc2.yml
+        stack_name: Alexa-CC-CreateEc2-Function
+        region: ${terraform_region}
+        wait: true
+        promote: true
+
 
     - stage: Terraform run
       env:

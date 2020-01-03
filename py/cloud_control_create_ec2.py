@@ -5,8 +5,8 @@ def write_to_dynamo(context):
     """ Write data to DynamoDB table """
     dynamodb_resource = boto3.resource('dynamodb')
     dynamodb_client = boto3.client('dynamodb')
-    context_table = dynamodb_resource.Table('alexa-cloud-control-context')
-    #funkcja z listą i iteracja po liście. To będzie najbardziej usable.
+    # function env variable - to change
+    context_table = dynamodb_resource.Table('alexa-cloudcontrol-context')
     for context_key, context_value in context.items():
         try:
             context_table.put_item(
@@ -20,6 +20,44 @@ def write_to_dynamo(context):
             print(error)
             return {"msg": msg}
     return 0
+
+def validate_with_dynamo(context):
+    """ Read context from DynamoDB table """
+    context_list=[
+        'the same',
+        'same',
+        'like last one',
+        'last one',
+        'last',
+        'previous',
+        'previous one',
+        'like before',
+        'like last time'
+    ]
+    dynamodb_resource = boto3.resource('dynamodb')
+    dynamodb_client = boto3.client('dynamodb')
+    context_table = dynamodb_resource.Table('alexa-cloudcontrol-context')
+    function_payload = {}
+    # Check if context contains context_list. If yes, check dynamo if there is a value
+    # for it. If no, throw error.
+    for context_key, context_value in context.items():
+        if context_value in context_list:
+            try:
+                response = context_table.get_item(
+                    Key={
+                        'ContextElement': context_key
+                    }
+                )
+            except dynamodb_client.exceptions.ClientError as error:
+                msg = "I don't remember anything for {}".format(
+                    context_key
+                )
+                print(error)
+                return {"msg": msg}
+            
+        else:
+            function_payload[context_key] = context_value
+    return function_payload
 
 def ec2_find_subnet(ec_data, msg):
     """ Check if Subnet exists """
@@ -79,7 +117,15 @@ def cloud_control_create_ec2(event, context):
     """ Lambda function - create ec2 """
 
     msg = ""
-    # validate instance name
+    validate_with_context_payload = {
+        "LastInstanceName": event["body"]["InstanceName"],
+        "LastSubnetName": event["body"]["SubnetName"],
+        "LastKeyPairName": event["body"]["KeyName"],
+        "LacSecGroupName": event["body"]["SecGroupName"],
+        "LastInstanceType": event["body"]["InstanceType"]
+    }
+    validate_with_dynamo(validate_with_context_payload)
+    # Validate instance name
     ec2_client = boto3.client('ec2')
     response = ec2_client.describe_instances(
         Filters=[
@@ -190,12 +236,12 @@ def cloud_control_create_ec2(event, context):
                 },
             ]
         )
-    table_payload = {
+    write_to_table_payload = {
         "LastInstanceName": event["body"]["InstanceName"],
         "LastSubnetName": event["body"]["SubnetName"],
         "LastKeyPairName": event["body"]["KeyName"],
         "LacSecGroupName": event["body"]["SecGroupName"],
         "LastInstanceType": event["body"]["InstanceType"]
     }
-    write_to_dynamo(table_payload)
+    write_to_dynamo(write_to_table_payload)
     return {"msg": msg}
