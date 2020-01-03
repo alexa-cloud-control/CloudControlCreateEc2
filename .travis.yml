@@ -3,9 +3,10 @@ dist: trusty
 language: bash
 
 stages:
-  - name: Terraform run
   - name: Perform tests
-  - name: Deploy code
+  - name: Prepare artifact
+    if: branch = master && type != cron
+  - name: Deploy
     if: branch = master && type != cron  
 
 services:
@@ -88,49 +89,3 @@ jobs:
         region: ${terraform_region}
         wait: true
         promote: true
-
-
-    - stage: Terraform run
-      env:
-        - TF_INPUT=false # No interraction
-      script:
-        - cd provision
-        - echo "Feeding terraform.tf with variables."
-        - sed -i -e "s/STATEBUCKETNAME/${terraform_bucket}/g" terraform.tf_template
-        - sed -i -e "s/TABLENAME/${terraform_table}/g" terraform.tf_template
-        - sed -i -e "s/REGION/${terraform_region}/g" terraform.tf_template
-        - mv terraform.tf_template terraform.tf
-        - echo "Feeding terraform.tfvars with variables."
-        - sed -i -e "s/REGION/${terraform_region}/g" terraform.tfvars_template
-        - sed -i -e "s/TABLENAME/${terraform_table}/g" terraform.tfvars_template
-        - sed -i -e "s/STATEBUCKETNAME/${terraform_bucket}/g" terraform.tfvars_template
-        - sed -i -e "s/ARTIFACTBUCKETNAME/${artifact_bucket}/g" terraform.tfvars_template
-        - sed -i -e "s/ENVIRONMENT/${terraform_environment}/g" terraform.tfvars_template
-        - sed -i -e "s/CONTEXTTABLE/${dynamodb_context}/g" terraform.tfvars_template
-        - mv terraform.tfvars_template terraform.tfvars
-        - terraform init
-        - terraform validate
-        - ./execute.sh
-
-    - stage: Deploy code
-      script: skip
-      deploy:
-        - provider: s3
-          bucket: "${artifact_bucket}"
-          local_dir: py
-          skip_cleanup: true
-
-        - provider: lambda
-          function_name: "cloud_control_create_ec2"
-          region: "${terraform_region}"
-          role: "arn:aws:iam::${account_number}:role/LambdaAlexaCloudControlCreateEc2IamRole"
-          runtime: "python3.6"
-          module_name: "cloud_control_create_ec2"
-          handler_name: "cloud_control_create_ec2"
-          description: "Alexa EC2 - Create EC2"
-          memory_size: 128
-          timeout: 5
-          zip: py/cloud_control_create_ec2.py
-          environment_variables: table=${dynamodb_context}
-          function_tags: Project=Alexa-Cloud-Control
-
