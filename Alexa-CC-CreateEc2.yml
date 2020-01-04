@@ -70,7 +70,7 @@ Resources:
       Description: Alexa CloudControl Create EC2 Function
       Code:
         S3Bucket: !ImportValue Alexa-CloudControl-Infrastructure-ArtifactsBucket
-        S3Key: CloudControlCreateEc2Function.zip
+        S3Key: CloudControlCreateEc2.zip
       Runtime: python3.6
       Handler: cloud_control_create_ec2.handler
       MemorySize: 128
