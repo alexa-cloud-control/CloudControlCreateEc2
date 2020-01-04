@@ -97,7 +97,7 @@ Resources:
       FunctionName: !GetAtt 
         - CreateEc2FunctionLambda
         - Arn
-      Principal: 'lambda.amazon.com'
+      Principal: 'lambda.amazonaws.com'
       SourceArn: !GetAtt
         - CreateEc2FunctionLambda
         - Arn
