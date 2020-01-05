@@ -68,6 +68,7 @@ Resources:
     Type: AWS::Lambda::Function
     Properties:
       Description: Alexa CloudControl Create EC2 Function
+      FunctionName: CloudControlCreateEc2
       Code:
         S3Bucket: !ImportValue Alexa-CloudControl-Infrastructure-ArtifactsBucket
         S3Key: CloudControlCreateEc2.zip
