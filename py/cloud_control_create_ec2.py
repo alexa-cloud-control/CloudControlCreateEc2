@@ -161,81 +161,45 @@ def cloud_control_create_ec2(event, context):
         return {"msg": msg}
 
     # Prepare data
-    # This should be improved.
-    # It looks bad, but I do not have idea now, how to write it better.
-    if not key_name == "none":
-        response = ec2_client.run_instances(
-            BlockDeviceMappings=[
-                {
-                    'DeviceName': '/dev/xvda',
-                    'Ebs': {
+    response = ec2_client.run_instances(
+        BlockDeviceMappings=[
+            {
+                'DeviceName': '/dev/xvda',
+                'Ebs': {
 
-                        'DeleteOnTermination': True,
-                        'VolumeSize': 8,
-                        'VolumeType': 'gp2'
-                    },
+                    'DeleteOnTermination': True,
+                    'VolumeSize': 8,
+                    'VolumeType': 'gp2'
                 },
-            ],
-            ImageId='ami-030dbca661d402413',
-            InstanceType=event["body"]["InstanceType"],
-            KeyName=key_name,
-            MaxCount=1,
-            MinCount=1,
-            Monitoring={
-                'Enabled': False
             },
-            SecurityGroupIds=[
-                sg_id,
-            ],
-            SubnetId=subnet_id,
-            TagSpecifications=[
-                {
-                    'ResourceType': 'instance',
-                    'Tags': [
-                        {
-                            'Key': 'Name',
-                            'Value': event["body"]["InstanceName"]
-                        },
-                    ]
-                },
-            ]
-        )
-    else:
-        response = ec2_client.run_instances(
-            BlockDeviceMappings=[
-                {
-                    'DeviceName': '/dev/xvda',
-                    'Ebs': {
+        ],
+        ImageId='ami-030dbca661d402413',
+        InstanceType=event["body"]["InstanceType"],
+        MaxCount=1,
+        MinCount=1,
+        Monitoring={
+            'Enabled': False
+        },
+        SecurityGroupIds=[
+            sg_id,
+        ],
+        SubnetId=subnet_id,
+        TagSpecifications=[
+            {
+                'ResourceType': 'instance',
+                'Tags': [
+                    {
+                        'Key': 'Name',
+                        'Value': event["body"]["InstanceName"]
+                    },
+                ]
+            },
+        ]
+    )
 
-                        'DeleteOnTermination': True,
-                        'VolumeSize': 8,
-                        'VolumeType': 'gp2'
-                    },
-                },
-            ],
-            ImageId='ami-030dbca661d402413',
-            InstanceType=event["body"]["InstanceType"],
-            MaxCount=1,
-            MinCount=1,
-            Monitoring={
-                'Enabled': False
-            },
-            SecurityGroupIds=[
-                sg_id,
-            ],
-            SubnetId=subnet_id,
-            TagSpecifications=[
-                {
-                    'ResourceType': 'instance',
-                    'Tags': [
-                        {
-                            'Key': 'Name',
-                            'Value': event["body"]["InstanceName"]
-                        },
-                    ]
-                },
-            ]
-        )
+    if not "none" in key_name:
+        response(KeyName=key_name)
+
     write_to_table_payload = {
         "LastInstanceName": event["body"]["InstanceName"],
         "LastSubnetName": event["body"]["SubnetName"],
