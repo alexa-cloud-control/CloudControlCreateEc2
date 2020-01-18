@@ -63,6 +63,11 @@ Resources:
                   - logs:CreateLogStream
                   - logs:PutLogEvents
                 Resource: arn:aws:logs:eu-west-1:ACCOUNTNUMBER:log-group:/aws/lambda/*
+              -
+                Effect: Allow
+                Action: ec2:*
+                Resource: "*"
+
   
   CreateEc2FunctionLambda:
     Type: AWS::Lambda::Function
@@ -73,7 +78,7 @@ Resources:
         S3Bucket: !ImportValue Alexa-CloudControl-Infrastructure-ArtifactsBucket
         S3Key: CloudControlCreateEc2.zip
       Runtime: python3.6
-      Handler: cloud_control_create_ec2.handler
+      Handler: cloud_control_create_ec2.cloud_control_create_ec2
       MemorySize: 128
       Timeout: 10
       Environment:
