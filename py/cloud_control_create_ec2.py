@@ -11,7 +11,7 @@ def write_to_dynamo(context):
         try:
             context_table.put_item(
                 Item={
-                    'ContextElement': context_key,
+                    'Element': context_key,
                     'ElementValue': context_value
                 }
             )
@@ -45,7 +45,7 @@ def validate_with_dynamo(context):
             try:
                 response = context_table.get_item(
                     Key={
-                        'ContextElement': context_key
+                        'Element': context_key
                     }
                 )
             except dynamodb_client.exceptions.ClientError as error:
@@ -240,7 +240,7 @@ def cloud_control_create_ec2(event, context):
         "LastInstanceName": event["body"]["InstanceName"],
         "LastSubnetName": event["body"]["SubnetName"],
         "LastKeyPairName": event["body"]["KeyName"],
-        "LacSecGroupName": event["body"]["SecGroupName"],
+        "LastSecGroupName": event["body"]["SecGroupName"],
         "LastInstanceType": event["body"]["InstanceType"]
     }
     write_to_dynamo(write_to_table_payload)
