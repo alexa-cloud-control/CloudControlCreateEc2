@@ -1,5 +1,6 @@
 """ Lambda function - create ec2 """
 import boto3
+import json
 
 def write_to_dynamo(context):
     """ Write data to DynamoDB table """
@@ -48,6 +49,7 @@ def validate_with_dynamo(context):
                         'Element': context_key
                     }
                 )
+                function_payload[context_key] = response['Item']['ElementValue']
             except dynamodb_client.exceptions.ClientError as error:
                 msg = "I don't remember anything for {}".format(
                     context_key
@@ -57,7 +59,8 @@ def validate_with_dynamo(context):
             
         else:
             function_payload[context_key] = context_value
-    return function_payload
+    json_payload = json.dumps(function_payload)
+    return json_payload
 
 def ec2_find_subnet(ec_data, msg):
     """ Check if Subnet exists """
@@ -121,17 +124,24 @@ def cloud_control_create_ec2(event, context):
         "LastInstanceName": event["body"]["InstanceName"],
         "LastSubnetName": event["body"]["SubnetName"],
         "LastKeyPairName": event["body"]["KeyName"],
-        "LacSecGroupName": event["body"]["SecGroupName"],
+        "LastSecGroupName": event["body"]["SecGroupName"],
         "LastInstanceType": event["body"]["InstanceType"]
     }
-    validate_with_dynamo(validate_with_context_payload)
+    response = {}
+    response = validate_with_dynamo(validate_with_context_payload)
+    payload_response = json.loads(response)
+    ValidatedInstanceName = payload_response["LastInstanceName"]
+    ValidatedSubnetName = payload_response["LastSubnetName"]
+    ValidatedKeyPairName = payload_response["LastKeyPairName"]
+    ValidatedSecGroupName = payload_response["LastSecGroupName"]
+    ValidatedInstanceType = payload_response["LastInstanceType"]
     # Validate instance name
     ec2_client = boto3.client('ec2')
     response = ec2_client.describe_instances(
         Filters=[
             {
                 'Name': 'tag:Name',
-                'Values': [event["body"]["InstanceName"]]
+                'Values': [ValidatedInstanceName]
             }
         ]
     )
@@ -141,22 +151,22 @@ def cloud_control_create_ec2(event, context):
             instance_list.append(instance['InstanceId'])
 
     if instance_list:
-        msg = "Instance with name {} exists!".format(event["body"]["InstanceName"])
+        msg = "Instance with name {} exists!".format(ValidatedInstanceName)
         return {"msg": msg}
 
 # to refactor
 
-    msg = "Instance {} is created ".format(event["body"]["InstanceName"])
-    subnet_name = event["body"]["SubnetName"].lower()
+    msg = "Instance {} is created ".format(ValidatedInstanceName)
+    subnet_name = ValidatedSubnetName.lower()
     success_code, msg, subnet_id = ec2_find_subnet(subnet_name, msg)
     if not success_code == 0:
         return {"msg": msg}
 
-    success_code, msg, sg_id = ec2_find_sg(event["body"]["SecGroupName"], msg)
+    success_code, msg, sg_id = ec2_find_sg(ValidatedSecGroupName, msg)
     if not success_code == 0:
         return {"msg": msg}
 
-    success_code, msg, key_name = ec2_find_key(event["body"]["KeyName"], msg)
+    success_code, msg, key_name = ec2_find_key(ValidatedKeyPairName, msg)
     if not success_code == 0:
         return {"msg": msg}
 
@@ -177,7 +187,7 @@ def cloud_control_create_ec2(event, context):
                 },
             ],
             ImageId='ami-030dbca661d402413',
-            InstanceType=event["body"]["InstanceType"],
+            InstanceType=ValidatedInstanceType,
             KeyName=key_name,
             MaxCount=1,
             MinCount=1,
@@ -194,7 +204,7 @@ def cloud_control_create_ec2(event, context):
                     'Tags': [
                         {
                             'Key': 'Name',
-                            'Value': event["body"]["InstanceName"]
+                            'Value': ValidatedInstanceName
                         },
                     ]
                 },
@@ -214,7 +224,7 @@ def cloud_control_create_ec2(event, context):
                 },
             ],
             ImageId='ami-030dbca661d402413',
-            InstanceType=event["body"]["InstanceType"],
+            InstanceType=ValidatedInstanceType,
             MaxCount=1,
             MinCount=1,
             Monitoring={
@@ -230,18 +240,18 @@ def cloud_control_create_ec2(event, context):
                     'Tags': [
                         {
                             'Key': 'Name',
-                            'Value': event["body"]["InstanceName"]
+                            'Value': ValidatedInstanceName
                         },
                     ]
                 },
             ]
         )
     write_to_table_payload = {
-        "LastInstanceName": event["body"]["InstanceName"],
-        "LastSubnetName": event["body"]["SubnetName"],
-        "LastKeyPairName": event["body"]["KeyName"],
-        "LastSecGroupName": event["body"]["SecGroupName"],
-        "LastInstanceType": event["body"]["InstanceType"]
+        "LastInstanceName": ValidatedInstanceName,
+        "LastSubnetName": ValidatedSubnetName,
+        "LastKeyPairName": ValidatedKeyPairName,
+        "LastSecGroupName": ValidatedSecGroupName,
+        "LastInstanceType": ValidatedInstanceType
     }
     write_to_dynamo(write_to_table_payload)
     return {"msg": msg}
