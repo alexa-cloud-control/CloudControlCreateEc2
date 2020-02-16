@@ -25,15 +25,18 @@ def write_to_dynamo(context):
 def validate_with_dynamo(context):
     """ Read context from DynamoDB table """
     context_list=[
-        'the same',
+        'the-same',
         'same',
-        'like last one',
-        'last one',
+        'like-last-one',
+        'like-last-1',
+        'last-one',
+        'last-1',
         'last',
         'previous',
-        'previous one',
-        'like before',
-        'like last time'
+        'previous-one',
+        'previous-1',
+        'like-before',
+        'like-last-time'
     ]
     dynamodb_resource = boto3.resource('dynamodb')
     dynamodb_client = boto3.client('dynamodb')
@@ -157,8 +160,8 @@ def cloud_control_create_ec2(event, context):
 # to refactor
 
     msg = "Instance {} is created ".format(ValidatedInstanceName)
-    subnet_name = ValidatedSubnetName.lower()
-    success_code, msg, subnet_id = ec2_find_subnet(subnet_name, msg)
+    #subnet_name = ValidatedSubnetName.lower()
+    success_code, msg, subnet_id = ec2_find_subnet(ValidatedSubnetName.lower(), msg)
     if not success_code == 0:
         return {"msg": msg}
 
